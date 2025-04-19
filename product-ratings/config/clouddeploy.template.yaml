@@ -1,0 +1,91 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+###
+
+apiVersion: deploy.cloud.google.com/v1
+kind: DeliveryPipeline
+metadata:
+  name: 'gke-deploy-app'
+description: 'GKE Deployment pipeline for demo app'
+serialPipeline:
+  stages:
+    - targetId: 'staging'
+      profiles: ['staging']
+    - targetId: 'prod'
+      profiles: ['prod']
+      strategy:
+        canary:
+          runtimeConfig:
+            kubernetes:
+              gatewayServiceMesh:
+                httpRoute: "my-app-service-route"
+                service: "my-app-service"
+                deployment: "my-app-deployment"
+                routeUpdateWaitTime: "60s"
+                podSelectorLabel: "app"
+          canaryDeployment:
+            percentages: [25] ### [25, 50]
+            verify: true
+---
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: 'staging'
+description: 'Staging target'
+gke:
+  cluster: projects/${PROJECT_ID}/locations/${REGION}/clusters/cluster-uat
+---
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: 'prod'
+description: 'Production target'
+gke:
+  cluster: projects/${PROJECT_ID}/locations/${REGION}/clusters/cluster-prod
+# ---
+# apiVersion: deploy.cloud.google.com/v1
+# kind: Automation
+# metadata:
+#   name: gke-deploy-app/promote
+# description: promotes a release
+# suspended: false
+# serviceAccount: 370258670136-compute@developer.gserviceaccount.com
+# selector:
+#   targets:
+#   - id: staging
+# rules:
+# - promoteReleaseRule:
+#     name: "promote-release"
+#     wait: 1m
+#     toTargetId: "@next"
+# ---
+# apiVersion: deploy.cloud.google.com/v1
+# kind: Automation
+# metadata:
+#   name: gke-deploy-app/advance
+# description: advances a rollout
+# suspended: false
+# serviceAccount: 370258670136-compute@developer.gserviceaccount.com
+# selector:
+#   targets:
+#   - id: prod
+# rules:
+# - advanceRolloutRule:
+#     name: "advance-rollout-1"
+#     sourcePhases: ["canary-25"]
+#     wait: 1m
+# - advanceRolloutRule:
+#     name: "advance-rollout-2"
+#     sourcePhases: ["canary-50"]
+#     wait: 1m
