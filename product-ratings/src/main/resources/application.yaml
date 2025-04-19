@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: ratings
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  flyway:
+    locations: classpath:/db/flyway
+    schemas: ratings
+    baselineOnMigrate: true
+    enabled: true
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/productRatings?currentSchema=ratings
+    username: productRatings
+    password:
+    # url: jdbc:postgresql://localhost:5432/ratings?currentSchema=ratings
+    # username: postgres
+    # password:
+
+# SERVER_PORT
+server:
+  port: ${PORT:8083}
+app:
+  name: ratings

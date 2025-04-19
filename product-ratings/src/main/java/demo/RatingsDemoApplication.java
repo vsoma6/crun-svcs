@@ -13,10 +13,15 @@ import java.util.List;
 import java.util.Map;
 
 
-
 @SpringBootApplication
 @RestController
 public class RatingsDemoApplication {
+
+    private final RatingsRepository ratingsRepository;
+
+    public RatingsDemoApplication(RatingsRepository ratingsRepository) {
+        this.ratingsRepository = ratingsRepository;
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(RatingsDemoApplication.class, args);
@@ -30,12 +35,11 @@ public class RatingsDemoApplication {
     @GetMapping("/{reviewId}/ratings")
     int ratingByreviewId(@PathVariable String reviewId) {
         int rating = -1;
-        if(reviewId.equals("R1001")){      
-            rating = 5;
-        }
-        else if(reviewId.equals("R1002")){
-            rating = 3;
-        }
+
+        Rating ratingFromDb = ratingsRepository.findOneByReviewId(reviewId);
+        if(ratingFromDb != null)
+            rating = ratingFromDb.getRating();
+
         return rating;
     }
 
